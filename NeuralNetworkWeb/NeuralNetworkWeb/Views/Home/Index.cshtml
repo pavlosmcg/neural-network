@@ -1,10 +1,10 @@
-﻿<canvas id="myCanvas" width="28" height="28" style="border-style: solid"></canvas>
+﻿<canvas id="myCanvas" width="300" height="300" style="border-style: solid;"></canvas>
 <button type="button" onclick="uploadImage()">Submit</button>
 <button type="button" onclick="clearCanvas()">Clear</button>
 <h2 id="message"></h2>
 <script type="text/javascript">
     $(function () {
-        $('#myCanvas').sketch({ defaultSize: 2 });
+        $('#myCanvas').sketch({ defaultSize: 10 });
     });
     document.uploadImage = function () {
         var imageData = document.getElementById('myCanvas').toDataURL('image/png');
