@@ -1,26 +1,16 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>title</title>
-    <script src="Content/jquery-2.1.4.min.js"></script>
-    <script src='Content/sketch.min.js'></script>
-</head>
-<body>
-    <canvas id="myCanvas" width="28" height="28" style="border-style: solid"></canvas>
-    <form name="imageForm" action="values" method="post" style="display: none">
-        <input type="text" name="image" id="image">
-        <input type="submit" value="Submit">
-    </form>
-    <button type="button" onclick="uploadImage()">Submit</button>
-    <script type="text/javascript">
-        $(function () {
-            $('#myCanvas').sketch({defaultSize: 2});
-        });
-        document.uploadImage = function() {
-            $('#image').val(document.getElementById('myCanvas').toDataURL('image/png'));
-            document.forms["imageForm"].submit();
-        };
-    </script>
-</body>
-</html>
+﻿<canvas id="myCanvas" width="28" height="28" style="border-style: solid"></canvas>
+<button type="button" onclick="uploadImage()">Submit</button>
+<button type="button" onclick="clearCanvas()">Clear</button>
+<h2 id="message"></h2>
+<script type="text/javascript">
+    $(function () {
+        $('#myCanvas').sketch({ defaultSize: 2 });
+    });
+    document.uploadImage = function () {
+        var imageData = document.getElementById('myCanvas').toDataURL('image/png');
+        $.post('/home/upload', { base64Image: imageData }).done(function (data) { $('#message').text(data); });
+    };
+    document.clearCanvas = function() {
+        location.reload();
+    };
+</script>
