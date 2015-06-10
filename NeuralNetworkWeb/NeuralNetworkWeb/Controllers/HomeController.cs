@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Web.Mvc;
 using ImageProcessor.Imaging;
 using ImageProcessor.Imaging.Filters.Photo;
@@ -12,7 +10,6 @@ using NeuralNetworkWeb.Models;
 using NeuralNetworkWeb.Models.Serialisation;
 using NeuralNetworkWeb.Providers;
 using Neuron;
-using Newtonsoft.Json;
 
 namespace NeuralNetworkWeb.Controllers
 {
@@ -44,9 +41,7 @@ namespace NeuralNetworkWeb.Controllers
                             .Resize(new ResizeLayer(new Size(imageSize, imageSize), ResizeMode.Stretch))
                             .Filter(MatrixFilters.GreyScale)
                             .Filter(MatrixFilters.Invert)
-                            .Flip(false, true)
-                            .Flip()
-                            .GaussianSharpen(2)
+                            .Flip(true)
                             .Rotate(90)
                             .Save(outstream);
                     }
@@ -61,12 +56,10 @@ namespace NeuralNetworkWeb.Controllers
                 for (int y = 0; y < imageSize; y++)
                 {
                     Color pixel = bitmap.GetPixel(x, y);
-                    inputs.Add(((pixel.R + pixel.G + pixel.B)/3.0d));
+                    inputs.Add(((pixel.R + pixel.G + pixel.B)/3.0d)/255.0d);
                 }
             }
 
-            //var stringinput = inputs.Select(i => i.ToString()).ToArray();
-            //return string.Join(",", stringinput);
             var networkDriver = new NetworkDriver();
             List<SensoryInput> sensoryInputs = inputs.Select(i => new SensoryInput(i)).ToList();
             List<INeuron> inputLayer = networkDriver.CreateLayer(sensoryInputs.Cast<IInput>().ToList(),
