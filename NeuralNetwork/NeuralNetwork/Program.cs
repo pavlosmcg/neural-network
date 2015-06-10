@@ -22,7 +22,7 @@ namespace NeuralNetwork
             var networkSerialiser = new Serialiser();
             IList<Tuple<int, IEnumerable<double>>> csvInputs = inputFileReader.ReadTrainingInputFile(@"training.csv", normalisation);
 
-            int validationFraction = csvInputs.Count / 10; // use all but ten percent for training, hold the rest back for validation
+            int validationFraction = (int)(csvInputs.Count * 0.05); // use all but a few percent for training, hold the rest back for validation
             var trainingInputs = csvInputs.Skip(validationFraction).ToList();
             var validationInputs = csvInputs.Take(validationFraction).ToList();
             
@@ -77,10 +77,12 @@ namespace NeuralNetwork
                 previousGlobalError = globalError;
                 Console.WriteLine("\nGlobal error for iteration {0}: {1}", trainingCounter, globalError);
 
-            } while (globalErrorDelta > 50.0d); // train until global error begins to level off
+                // serialise the network to disk
+                networkSerialiser.SerialiseWeightsToDisk(
+                    string.Format("network-{0}.json", trainingCounter),
+                    inputLayer, hiddenLayer, outputLayer);
 
-            // serialise the network to disk
-            networkSerialiser.SerialiseWeightsToDisk(inputLayer, hiddenLayer, outputLayer);
+            } while (globalErrorDelta > 5.0d); // train until global error begins to level off
 
             // Run on real testing data and write output to console:
             Console.WriteLine("Writing output to {0}", outputFileName);

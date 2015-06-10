@@ -7,8 +7,8 @@ namespace NeuralNetwork.Serialisation
 {
     public class Serialiser
     {
-        public void SerialiseWeightsToDisk(
-            List<INeuron> inputLayer, List<INeuron> hiddenLayer, List<INeuron> outputLayer)
+        public void SerialiseWeightsToDisk(string filename, List<INeuron> inputLayer, 
+            List<INeuron> hiddenLayer, List<INeuron> outputLayer)
         {
             var network = new Network
             {
@@ -17,7 +17,7 @@ namespace NeuralNetwork.Serialisation
                 OutputLayer = SerialiseLayer(outputLayer)
             };
             string json = JsonConvert.SerializeObject(network, Formatting.Indented);
-            using (var file = new System.IO.StreamWriter("network.json"))
+            using (var file = new System.IO.StreamWriter(filename))
             {
                 file.Write(json);
                 file.Close();
