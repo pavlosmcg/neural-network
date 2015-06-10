@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web;
 using System.Web.Mvc;
-using System.Xml.Linq;
 using ImageProcessor.Imaging;
 using ImageProcessor.Imaging.Filters.Photo;
-using ImageProcessor.Imaging.Formats;
-using Filter = ImageProcessor.Processors.Filter;
+using NeuralNetworkWeb.Models;
+using NeuralNetworkWeb.Models.Serialisation;
+using NeuralNetworkWeb.Providers;
+using Neuron;
+using Newtonsoft.Json;
 
 namespace NeuralNetworkWeb.Controllers
 {
@@ -28,9 +28,12 @@ namespace NeuralNetworkWeb.Controllers
         [HttpPost]
         public string Upload(ImageData upload)
         {
+            Network networkModel = new NetworkDeserialiser().LoadNetwork(Server.MapPath(@"~/App_Data/network-7.json"));
+
             string raw = upload.base64Image;
             byte[] data = Convert.FromBase64String(raw.Substring(raw.IndexOf(',') + 1));
-            Bitmap bitmap; 
+            Bitmap bitmap;
+            const int imageSize = 28;
             using (var inStream = new MemoryStream(data, 0, data.Length))
             {
                 using (var outstream = new MemoryStream())
@@ -38,9 +41,12 @@ namespace NeuralNetworkWeb.Controllers
                     using (var imagefactory = new ImageProcessor.ImageFactory())
                     {
                         imagefactory.Load(inStream)
-                            .Resize(new ResizeLayer(new Size(28, 28), ResizeMode.Stretch))
+                            .Resize(new ResizeLayer(new Size(imageSize, imageSize), ResizeMode.Stretch))
+                            .Filter(MatrixFilters.GreyScale)
                             .Filter(MatrixFilters.Invert)
+                            .Flip(false, true)
                             .Flip()
+                            .GaussianSharpen(2)
                             .Rotate(90)
                             .Save(outstream);
                     }
@@ -49,24 +55,31 @@ namespace NeuralNetworkWeb.Controllers
                 }
             }
 
-            var result = new StringBuilder();
-            for (int x = 0; x < 28; x++)
+            var inputs = new List<double>();
+            for (int x = 0; x < imageSize; x++)
             {
-                for (int y = 0; y < 28; y++)
+                for (int y = 0; y < imageSize; y++)
                 {
                     Color pixel = bitmap.GetPixel(x, y);
-                    int value = ((pixel.R + pixel.G + pixel.B)/3);
-                    result.Append(value.ToString(CultureInfo.InvariantCulture));
-                    result.Append(',');
+                    inputs.Add(((pixel.R + pixel.G + pixel.B)/3.0d));
                 }
             }
 
-            return result.ToString();
-        }
-    }
+            //var stringinput = inputs.Select(i => i.ToString()).ToArray();
+            //return string.Join(",", stringinput);
+            var networkDriver = new NetworkDriver();
+            List<SensoryInput> sensoryInputs = inputs.Select(i => new SensoryInput(i)).ToList();
+            List<INeuron> inputLayer = networkDriver.CreateLayer(sensoryInputs.Cast<IInput>().ToList(),
+                networkModel.InputLayer);
+            List<INeuron> hiddenLayer = networkDriver.CreateLayer(inputLayer.Cast<IInput>().ToList(),
+                networkModel.HiddenLayers[0]);
+            List<INeuron> outputLayer = networkDriver.CreateLayer(hiddenLayer.Cast<IInput>().ToList(),
+                networkModel.OutputLayer);
 
-    public class ImageData
-    {
-        public string base64Image { get; set; }
+            networkDriver.UpdateNetwork(inputLayer, hiddenLayer, outputLayer);
+            int result = networkDriver.GetMostLikelyAnswer(outputLayer);
+
+            return string.Format("I think it looks like a {0}", result);
+        }
     }
 }
