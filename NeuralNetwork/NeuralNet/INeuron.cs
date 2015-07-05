@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Components
+namespace NeuralNet
 {
     public interface INeuron : IInput
     {

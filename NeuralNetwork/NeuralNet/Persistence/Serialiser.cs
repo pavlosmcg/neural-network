@@ -2,7 +2,7 @@
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace Components.Persistence
+namespace NeuralNet.Persistence
 {
     public static class Serialiser
     {

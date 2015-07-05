@@ -1,4 +1,4 @@
-﻿namespace Components.Persistence
+﻿namespace NeuralNet.Persistence
 {
     public class NetworkModel
     {
