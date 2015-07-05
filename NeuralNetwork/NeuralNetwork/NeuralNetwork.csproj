@@ -53,9 +53,9 @@
     <Compile Include="Serialisation\Serialiser.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Neuron\Neuron.csproj">
+    <ProjectReference Include="..\Components\Components.csproj">
       <Project>{12e1ffff-ffa4-4736-af98-45b8b3e203b0}</Project>
-      <Name>Neuron</Name>
+      <Name>Components</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
