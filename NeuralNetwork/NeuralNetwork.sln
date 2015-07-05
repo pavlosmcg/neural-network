@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNetwork", "NeuralNetwork\NeuralNetwork.csproj", "{CB130200-0FED-4B92-B60A-7B5FD40AA1A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DigitRecognition", "DigitRecognition\DigitRecognition.csproj", "{CB130200-0FED-4B92-B60A-7B5FD40AA1A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Components", "Components\Components.csproj", "{12E1FFFF-FFA4-4736-AF98-45B8B3E203B0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNet", "NeuralNet\NeuralNet.csproj", "{12E1FFFF-FFA4-4736-AF98-45B8B3E203B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
