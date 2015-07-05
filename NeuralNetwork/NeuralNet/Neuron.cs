@@ -17,9 +17,9 @@ namespace NeuralNet
             Inputs = new Dictionary<IInput, ISynapse>();
         }
 
-        public void RegisterInput(IInput input)
+        public void RegisterInput(IInput input, double weight)
         {
-            Inputs.Add(input, new Synapse(input));
+            Inputs.Add(input, new Synapse(input, weight));
         }
 
         public void Update()
