@@ -1,19 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Components;
 using Newtonsoft.Json;
 
-namespace NeuralNetwork.Serialisation
+namespace Components.Persistence
 {
-    public class Serialiser
+    public static class Serialiser
     {
-        public void SerialiseWeightsToDisk(string filename, List<INeuron> inputLayer, 
-            List<INeuron> hiddenLayer, List<INeuron> outputLayer)
+        public static void SerialiseWeightsToDisk(string filename, List<List<INeuron>> hiddenLayers, List<INeuron> outputLayer)
         {
-            var network = new Network
+            var network = new NetworkModel
             {
-                InputLayer = SerialiseLayer(inputLayer),
-                HiddenLayers = new[] { SerialiseLayer(hiddenLayer) },
+                HiddenLayers = hiddenLayers.Select(SerialiseLayer).ToArray(),
                 OutputLayer = SerialiseLayer(outputLayer)
             };
             string json = JsonConvert.SerializeObject(network, Formatting.Indented);
@@ -24,12 +21,12 @@ namespace NeuralNetwork.Serialisation
             }
         }
 
-        private Layer SerialiseLayer(List<INeuron> layer)
+        private static LayerModel SerialiseLayer(IEnumerable<INeuron> layer)
         {
-            return new Layer
+            return new LayerModel
             {
                 Neurons = layer.Select(neuron => neuron.Inputs.Select(kvp => kvp.Value.Weight))
-                    .Select(inputWeights => new Neuron { InputWeights = inputWeights.ToArray() })
+                    .Select(inputWeights => new NeuronModel { InputWeights = inputWeights.ToArray() })
                     .ToArray()
             };
         } 

@@ -7,9 +7,9 @@ namespace NeuralNetwork
 {
     public class InputFileReader
     {
-        public IList<Tuple<int, IEnumerable<double>>> ReadTrainingInputFile(string filePath, double normalisation = 1.0d)
+        public IList<Tuple<string, IEnumerable<double>>> ReadTrainingInputFile(string filePath, double normalisation = 1.0d)
         {
-            IList<Tuple<int, IEnumerable<double>>> csvInputs = new List<Tuple<int, IEnumerable<double>>>();
+            IList<Tuple<string, IEnumerable<double>>> csvInputs = new List<Tuple<string, IEnumerable<double>>>();
             using (var reader = new StreamReader(File.OpenRead(filePath)))
             {
                 while (!reader.EndOfStream)
@@ -21,7 +21,7 @@ namespace NeuralNetwork
                     }
 
                     var raw = line.Split(',');
-                    var tuple = new Tuple<int, IEnumerable<double>>(int.Parse(raw[0]),
+                    var tuple = new Tuple<string, IEnumerable<double>>(raw[0],
                         raw.Skip(1).Select(s => double.Parse(s)/ normalisation));
                     csvInputs.Add(tuple);
                 }
