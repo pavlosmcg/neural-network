@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Neuron
+﻿namespace Components
 {
     public class SensoryInput : IInput
     {

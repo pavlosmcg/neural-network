@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Components;
 using NeuralNetwork.Serialisation;
-using Neuron;
-using Newtonsoft.Json;
 
 namespace NeuralNetwork
 {
@@ -135,7 +134,7 @@ namespace NeuralNetwork
             var layer = new List<INeuron>();
             for (var i = 0; i < layerSize; i++)
             {
-                var neuron = new Neuron.Neuron(Activation);
+                var neuron = new Components.Neuron(Activation);
                 neuron.RegisterInput(layerBias);
                 inputs.ForEach(neuron.RegisterInput);
                 layer.Add(neuron);

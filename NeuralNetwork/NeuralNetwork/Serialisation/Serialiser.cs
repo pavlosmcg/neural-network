@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Neuron;
+using Components;
 using Newtonsoft.Json;
 
 namespace NeuralNetwork.Serialisation
