@@ -4,13 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{CB130200-0FED-4B92-B60A-7B5FD40AA1A6}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{12E1FFFF-FFA4-4736-AF98-45B8B3E203B0}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NeuralNetwork</RootNamespace>
-    <AssemblyName>NeuralNetwork</AssemblyName>
+    <RootNamespace>NeuralNet</RootNamespace>
+    <AssemblyName>NeuralNet</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -29,10 +30,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,25 +44,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InputFileReader.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Network.cs" />
+    <Compile Include="Persistence\NetworkModel.cs" />
+    <Compile Include="Persistence\Serialiser.cs" />
+    <Compile Include="Synapse.cs" />
+    <Compile Include="BiasInput.cs" />
+    <Compile Include="ISynapse.cs" />
+    <Compile Include="IInput.cs" />
+    <Compile Include="SensoryInput.cs" />
+    <Compile Include="SigmoidActivation.cs" />
+    <Compile Include="IActivationFunction.cs" />
+    <Compile Include="INeuron.cs" />
+    <Compile Include="Neuron.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Components\Components.csproj">
-      <Project>{12e1ffff-ffa4-4736-af98-45b8b3e203b0}</Project>
-      <Name>Components</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\testing.csv">
-      <Link>testing.csv</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\training.csv">
-      <Link>training.csv</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
