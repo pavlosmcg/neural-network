@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Neuron
+namespace Components
 {
     public static class Util
     {

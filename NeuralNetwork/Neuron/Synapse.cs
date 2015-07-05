@@ -1,4 +1,4 @@
-﻿namespace Neuron
+﻿namespace Components
 {
     public class Synapse : ISynapse
     {
