@@ -1,4 +1,4 @@
-﻿namespace Components
+﻿namespace NeuralNet
 {
     public class SensoryInput : IInput
     {

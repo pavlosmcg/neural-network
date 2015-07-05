@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Components;
-using Network = Components.Network;
+using NeuralNet;
 
-namespace NeuralNetwork
+namespace DigitRecognition
 {
     public class Program
     {
