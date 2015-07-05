@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace NeuralNet.Persistence
@@ -14,7 +16,7 @@ namespace NeuralNet.Persistence
                 OutputLayer = SerialiseLayer(outputLayer)
             };
             string json = JsonConvert.SerializeObject(network, Formatting.Indented);
-            using (var file = new System.IO.StreamWriter(filename))
+            using (var file = new StreamWriter(filename))
             {
                 file.Write(json);
                 file.Close();
@@ -29,6 +31,20 @@ namespace NeuralNet.Persistence
                     .Select(inputWeights => new NeuronModel { InputWeights = inputWeights.ToArray() })
                     .ToArray()
             };
-        } 
+        }
+
+        public static NetworkModel LoadNetworkFromDisk(string path)
+        {
+            var sb = new StringBuilder();
+            using (var sr = new StreamReader(path))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    sb.AppendLine(line);
+                }
+            }
+            return JsonConvert.DeserializeObject<NetworkModel>(sb.ToString());
+        }
     }
 }

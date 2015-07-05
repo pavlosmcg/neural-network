@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using NeuralNet.Persistence;
+using Newtonsoft.Json;
 
 namespace NeuralNet
 {
@@ -20,16 +23,60 @@ namespace NeuralNet
             _inputSize = inputSize;
             _outputList = outputList;
 
-            InitaliseLayers(hiddenLayerSizes);
+            CreateNetwork(hiddenLayerSizes);
         }
 
-        private void InitaliseLayers(int[] hiddenLayerSizes)
+        public Network(IActivationFunction activation, int inputSize, List<string> outputList, string filePath)
+        {
+            _activation = activation;
+            _inputSize = inputSize;
+            _outputList = outputList;
+
+            RestoreNetwork(RestoreNetworkFromDisk(filePath));
+        }
+
+        private void RestoreNetwork(NetworkModel networkModel)
+        {
+            // restore input layer
+            InitialiseInputLayer();
+
+            // restore hidden layers
+            _hiddenLayers.Add(RestoreLayer(networkModel.HiddenLayers[0], _inputs.Cast<IInput>().ToList()));
+            for (int i = 1; i < networkModel.HiddenLayers.Length; i++)
+            {
+                var previousLayer = _hiddenLayers[i - 1];
+                _hiddenLayers.Add(RestoreLayer(networkModel.HiddenLayers[i], previousLayer.Cast<IInput>().ToList()));
+            }
+
+            // restore output layer
+            List<INeuron> outputNeurons = RestoreLayer(networkModel.OutputLayer, _hiddenLayers.Last().Cast<IInput>().ToList());
+            _outputLayer = outputNeurons.Zip(_outputList, (n, s) => new { n, s })
+                .ToDictionary(i => i.n, i => i.s);
+        }
+
+        public List<INeuron> RestoreLayer(LayerModel layerModel, List<IInput> inputs)
+        {
+            var layerBias = new BiasInput(1.0d);
+            var layer = new List<INeuron>();
+            foreach (var model in layerModel.Neurons)
+            {
+                var neuron = new Neuron(_activation);
+                neuron.RegisterInput(layerBias, model.InputWeights[0]);
+                var inputWeights = model.InputWeights.Skip(1).ToArray();
+                for (int j = 0; j < inputs.Count; j++)
+                {
+                    neuron.RegisterInput(inputs[j], inputWeights[j]);
+                }
+                layer.Add(neuron);
+            }
+            return layer;
+        }
+
+        private void CreateNetwork(int[] hiddenLayerSizes)
         {
             // intialise input layer
-            for (int i = 0; i < _inputSize; i++)
-            {
-                _inputs.Add(new SensoryInput());
-            }
+            InitialiseInputLayer();
+
             // initialise hidden layers
             _hiddenLayers.Add(CreateLayer(hiddenLayerSizes[0], _inputs.Cast<IInput>().ToList()));
             for (int i = 1; i < hiddenLayerSizes.Length; i++)
@@ -43,6 +90,14 @@ namespace NeuralNet
                 .ToDictionary(i => i.n, i => i.s);
         }
 
+        private void InitialiseInputLayer()
+        {
+            for (int i = 0; i < _inputSize; i++)
+            {
+                _inputs.Add(new SensoryInput());
+            }
+        }
+
         private List<INeuron> CreateLayer(int layerSize, List<IInput> inputs)
         {
             var layerBias = new BiasInput(1.0d);
@@ -50,8 +105,8 @@ namespace NeuralNet
             for (var i = 0; i < layerSize; i++)
             {
                 var neuron = new Neuron(_activation);
-                neuron.RegisterInput(layerBias);
-                inputs.ForEach(neuron.RegisterInput);
+                neuron.RegisterInput(layerBias, Util.GetRandomWeight());
+                inputs.ForEach(input => neuron.RegisterInput(input, Util.GetRandomWeight()));
                 layer.Add(neuron);
             }
             return layer;
@@ -128,6 +183,20 @@ namespace NeuralNet
         {
             Serialiser.SerialiseWeightsToDisk(
                 filename, _hiddenLayers, _outputLayer.Select(item => item.Key).ToList());
+        }
+
+        public NetworkModel RestoreNetworkFromDisk(string filePath)
+        {
+            var sb = new StringBuilder();
+            using (var sr = new StreamReader(filePath))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    sb.AppendLine(line);
+                }
+            }
+            return JsonConvert.DeserializeObject<NetworkModel>(sb.ToString());
         }
     }
 }
