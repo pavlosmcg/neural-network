@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
 using Components;
-using NeuralNetwork.Serialisation;
+using Network = Components.Network;
 
 namespace NeuralNetwork
 {
@@ -12,27 +12,22 @@ namespace NeuralNetwork
         private static readonly IActivationFunction Activation = new SigmoidActivation();
         public static void Main()
         {
-            const int numInHiddenLayer = 500;
-            const int numOfOutputs = 10;
             const double normalisation = 255.0d;
             const string outputFileName = "output.txt";
 
             var inputFileReader = new InputFileReader();
-            var networkSerialiser = new Serialiser();
-            IList<Tuple<int, IEnumerable<double>>> csvInputs = inputFileReader.ReadTrainingInputFile(@"training.csv", normalisation);
+            IList<Tuple<string, IEnumerable<double>>> csvInputs = inputFileReader.ReadTrainingInputFile(@"training.csv", normalisation);
 
             int validationFraction = (int)(csvInputs.Count * 0.05); // use all but a few percent for training, hold the rest back for validation
             var trainingInputs = csvInputs.Skip(validationFraction).ToList();
             var validationInputs = csvInputs.Take(validationFraction).ToList();
-            
-            // create inputs and the three layers
-            List<SensoryInput> sensoryInputs = trainingInputs[0].Item2.Select(i => new SensoryInput()).ToList();
-            List<INeuron> inputLayer = CreateLayer(sensoryInputs.Count, sensoryInputs.Cast<IInput>().ToList());
-            List<INeuron> hiddenLayer = CreateLayer(numInHiddenLayer, inputLayer.Cast<IInput>().ToList());
-            List<INeuron> outputLayer = CreateLayer(numOfOutputs, hiddenLayer.Cast<IInput>().ToList());
 
-            double previousGlobalError = double.MaxValue;
-            double globalErrorDelta;
+            var outputList = Enumerable.Range(0, 10).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToList();
+            var hiddenLayerSizes = new[] { 250, 200, 150, 100, 50 };
+            var network = new Network(Activation, 784, outputList, hiddenLayerSizes);
+            
+            double previousErrorRate = double.MaxValue;
+            double errorRateDelta;
 
             // training:
             int trainingCounter = 0;
@@ -43,119 +38,44 @@ namespace NeuralNetwork
                 foreach (var specimen in trainingInputs)
                 {
                     Console.Write("\rTraining iteration {0}... specimen {1}", trainingCounter, ++specimenCounter);
-
-                    UpdateNetwork(specimen.Item2.ToList(), sensoryInputs, inputLayer, hiddenLayer, outputLayer);
-
-                    // train output layer
-                    for (int k = 0; k < outputLayer.Count; k++)
-                    {
-                        double desired = k == specimen.Item1 ? 1.0d : 0.0d;
-                        double output = outputLayer[k].GetValue();
-                        double error = desired - output;
-                        outputLayer[k].Train(error);
-                    }
-                    // train hidden layer, then train input layer
-                    BackPropagate(hiddenLayer, outputLayer);
-                    BackPropagate(inputLayer, hiddenLayer);
+                    network.TrainNetwork(specimen.Item2.ToList(), specimen.Item1);
                 }
 
                 // calculate global error using the validation set that was excluded from training:
-                double globalError = 0.0d;
+                int numberIncorrect = 0;
                 foreach (var specimen in validationInputs)
                 {
-                    UpdateNetwork(specimen.Item2.ToList(), sensoryInputs, inputLayer, hiddenLayer, outputLayer);
-
-                    for (int i = 0; i < outputLayer.Count; i++)
+                    network.UpdateNetwork(specimen.Item2.ToList());
+                    string answer = network.GetMostLikelyAnswer();
+                    if (!string.Equals(answer, specimen.Item1))
                     {
-                        double desired = i == specimen.Item1 ? 1.0d : 0.0d;
-                        globalError += Math.Abs(desired - outputLayer[i].GetValue());
+                        numberIncorrect++;
                     }
                 }
 
-                globalErrorDelta = Math.Abs(previousGlobalError - globalError);
-                previousGlobalError = globalError;
-                Console.WriteLine("\nGlobal error for iteration {0}: {1}", trainingCounter, globalError);
+                double errorRate = (numberIncorrect/(double) trainingInputs.Count) * 100;
+                errorRateDelta = Math.Abs(previousErrorRate - errorRate);
+                previousErrorRate = errorRate;
+                Console.WriteLine("\nError % for iteration {0}: {1}", trainingCounter, errorRate);
 
                 // serialise the network to disk
-                networkSerialiser.SerialiseWeightsToDisk(
-                    string.Format("network-{0}.json", trainingCounter),
-                    inputLayer, hiddenLayer, outputLayer);
+                network.SerialiseNetworkToDisk(string.Format("network-{0}.json", trainingCounter));
 
-            } while (globalErrorDelta > 5.0d); // train until global error begins to level off
+            } while (errorRateDelta > 0.01d); // train until global error begins to level off
 
-            // Run on real testing data and write output to console:
+            // Run on real testing data:
             Console.WriteLine("Writing output to {0}", outputFileName);
             var testingInputs = inputFileReader.ReadTestingInputFile(@"testing.csv", normalisation);
             using (var writer = new System.IO.StreamWriter(outputFileName))
             {
                 foreach (var specimen in testingInputs)
                 {
-                    UpdateNetwork(specimen.ToList(), sensoryInputs, inputLayer, hiddenLayer, outputLayer);
-                    int mostLikelyAnswer = GetMostLikelyAnswer(outputLayer);
+                    network.UpdateNetwork(specimen.ToList());
+                    string mostLikelyAnswer = network.GetMostLikelyAnswer();
                     writer.WriteLine(mostLikelyAnswer);
                 }
                 writer.Close();
             }
-        }
-
-        private static void UpdateNetwork(IList<double> specimenInputs, List<SensoryInput> sensoryInputs, 
-            List<INeuron> inputLayer, List<INeuron> hiddenLayer, List<INeuron> outputLayer)
-        {
-            for (int i = 0; i < specimenInputs.Count; i++)
-                sensoryInputs[i].UpdateValue(specimenInputs[i]);
-
-            UpdateLayer(inputLayer);
-            UpdateLayer(hiddenLayer);
-            UpdateLayer(outputLayer);
-        }
-
-        private static void UpdateLayer(IEnumerable<INeuron> layer)
-        {
-            // Output can be computed in parallel as neurons in a layer are independent of each other
-            Parallel.ForEach(layer, neuron => neuron.Update());
-        }
-
-        private static void BackPropagate(IEnumerable<INeuron> leftLayer, List<INeuron> rightLayer)
-        {
-            // backpropagation can also be done in parallel for a particular layer
-            Parallel.ForEach(leftLayer, leftNeuron =>
-            {
-                // the compute the error contribution of this neuron, by looking at the 
-                // error of the neurons it is connected to on the right
-                var errorContribution =
-                    rightLayer.Sum(rightNeuron => rightNeuron.Inputs[leftNeuron].Weight*rightNeuron.Error);
-                leftNeuron.Train(errorContribution);
-            });
-        }
-
-        private static List<INeuron> CreateLayer(int layerSize, List<IInput> inputs)
-        {
-            var layerBias = new BiasInput(1.0d);
-            var layer = new List<INeuron>();
-            for (var i = 0; i < layerSize; i++)
-            {
-                var neuron = new Components.Neuron(Activation);
-                neuron.RegisterInput(layerBias);
-                inputs.ForEach(neuron.RegisterInput);
-                layer.Add(neuron);
-            }
-            return layer;
-        }
-
-        private static int GetMostLikelyAnswer(IList<INeuron> outputLayer)
-        {
-            double max = 0.0d;
-            int answer = 0;
-            for (int i = 0; i < outputLayer.Count; i++)
-            {
-                double value = outputLayer[i].GetValue();
-                if (value > max)
-                {
-                    max = value;
-                    answer = i;
-                }
-            }
-            return answer;
         }
     }
 }
