@@ -24,7 +24,7 @@ namespace DigitRecognitionWeb.Controllers
         [HttpPost]
         public string Upload(ImageData upload)
         {
-            string path = Server.MapPath(@"~/App_Data/network-2.json");
+            string path = Server.MapPath(@"~/App_Data/network.json");
             var activation = new SigmoidActivation();
             var outputList = Enumerable.Range(0, 10).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToList();
             var network = new Network(activation, 784, outputList, path);
