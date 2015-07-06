@@ -8,25 +8,14 @@ namespace DigitRecognition
 {
     public class Program
     {
-        private static readonly IActivationFunction Activation = new SigmoidActivation();
         public static void Main()
         {
-            const double normalisation = 255.0d;
-            const string outputFileName = "output.txt";
-
-            var inputFileReader = new InputFileReader();
-            IList<Tuple<string, IEnumerable<double>>> csvInputs = inputFileReader.ReadTrainingInputFile(@"training.csv", normalisation);
-
-            int validationFraction = (int)(csvInputs.Count * 0.05); // use all but a few percent for training, hold the rest back for validation
-            var trainingInputs = csvInputs.Skip(validationFraction).ToList();
-            var validationInputs = csvInputs.Take(validationFraction).ToList();
+            IList<Tuple<string, IEnumerable<double>>> trainingInputs = InputFileReader.ReadTrainingInput();
+            IList<Tuple<string, IEnumerable<double>>> validationInputs = InputFileReader.ReadTestingInput();
 
             var outputList = Enumerable.Range(0, 10).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToList();
-            var hiddenLayerSizes = new[] { 250, 200, 150, 100, 50 };
-            var network = new Network(Activation, 784, outputList, hiddenLayerSizes);
-            
-            double previousErrorRate = double.MaxValue;
-            double errorRateDelta;
+            var hiddenLayerSizes = new[] { 2500, 2000, 1500, 1000, 500 };
+            var network = new Network(new SigmoidActivation(), 784, outputList, hiddenLayerSizes);
 
             // training:
             int trainingCounter = 0;
@@ -36,45 +25,33 @@ namespace DigitRecognition
                 int specimenCounter = 0;
                 foreach (var specimen in trainingInputs)
                 {
+                    if (Console.KeyAvailable)
+                        break;
                     Console.Write("\rTraining iteration {0}... specimen {1}", trainingCounter, ++specimenCounter);
                     network.TrainNetwork(specimen.Item2.ToList(), specimen.Item1);
                 }
 
-                // calculate global error using the validation set that was excluded from training:
+                if (Console.KeyAvailable)
+                    break;
+
+                // calculate error using the testing set:
                 int numberIncorrect = 0;
                 foreach (var specimen in validationInputs)
                 {
                     network.UpdateNetwork(specimen.Item2.ToList());
                     string answer = network.GetMostLikelyAnswer();
                     if (!string.Equals(answer, specimen.Item1))
-                    {
                         numberIncorrect++;
-                    }
                 }
 
-                double errorRate = (numberIncorrect/(double) trainingInputs.Count) * 100;
-                errorRateDelta = Math.Abs(previousErrorRate - errorRate);
-                previousErrorRate = errorRate;
+                double errorRate = (numberIncorrect/(double) validationInputs.Count) * 100;
                 Console.WriteLine("\nError % for iteration {0}: {1}", trainingCounter, errorRate);
 
                 // serialise the network to disk
-                network.SerialiseNetworkToDisk(string.Format("network-{0}.json", trainingCounter));
+                Console.WriteLine("Writing iteration {0} to network.json", trainingCounter);
+                network.SerialiseNetworkToDisk("network.json");
 
-            } while (errorRateDelta > 0.01d); // train until global error begins to level off
-
-            // Run on real testing data:
-            Console.WriteLine("Writing output to {0}", outputFileName);
-            var testingInputs = inputFileReader.ReadTestingInputFile(@"testing.csv", normalisation);
-            using (var writer = new System.IO.StreamWriter(outputFileName))
-            {
-                foreach (var specimen in testingInputs)
-                {
-                    network.UpdateNetwork(specimen.ToList());
-                    string mostLikelyAnswer = network.GetMostLikelyAnswer();
-                    writer.WriteLine(mostLikelyAnswer);
-                }
-                writer.Close();
-            }
+            } while (!Console.KeyAvailable);
         }
     }
 }

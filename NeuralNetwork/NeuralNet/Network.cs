@@ -11,34 +11,26 @@ namespace NeuralNet
     public class Network
     {
         private readonly IActivationFunction _activation;
-        private readonly int _inputSize;
-        private readonly List<string> _outputList;
         private readonly List<SensoryInput> _inputs = new List<SensoryInput>();
         private readonly List<List<INeuron>> _hiddenLayers = new List<List<INeuron>>();
         private Dictionary<INeuron, string> _outputLayer;
 
-        public Network(IActivationFunction activation, int inputSize, List<string> outputList, params int[] hiddenLayerSizes)
+        public Network(IActivationFunction activation, int inputSize, IEnumerable<string> outputList, params int[] hiddenLayerSizes)
         {
             _activation = activation;
-            _inputSize = inputSize;
-            _outputList = outputList;
-
-            CreateNetwork(hiddenLayerSizes);
+            CreateNetwork(hiddenLayerSizes, inputSize, outputList);
         }
 
-        public Network(IActivationFunction activation, int inputSize, List<string> outputList, string filePath)
+        public Network(IActivationFunction activation, int inputSize, IEnumerable<string> outputList, string filePath)
         {
             _activation = activation;
-            _inputSize = inputSize;
-            _outputList = outputList;
-
-            RestoreNetwork(RestoreNetworkFromDisk(filePath));
+            RestoreNetwork(RestoreNetworkFromDisk(filePath), inputSize, outputList);
         }
 
-        private void RestoreNetwork(NetworkModel networkModel)
+        private void RestoreNetwork(NetworkModel networkModel, int inputSize, IEnumerable<string> outputList)
         {
             // restore input layer
-            InitialiseInputLayer();
+            InitialiseInputLayer(inputSize);
 
             // restore hidden layers
             _hiddenLayers.Add(RestoreLayer(networkModel.HiddenLayers[0], _inputs.Cast<IInput>().ToList()));
@@ -50,7 +42,7 @@ namespace NeuralNet
 
             // restore output layer
             List<INeuron> outputNeurons = RestoreLayer(networkModel.OutputLayer, _hiddenLayers.Last().Cast<IInput>().ToList());
-            _outputLayer = outputNeurons.Zip(_outputList, (n, s) => new { n, s })
+            _outputLayer = outputNeurons.Zip(outputList, (n, s) => new { n, s })
                 .ToDictionary(i => i.n, i => i.s);
         }
 
@@ -72,10 +64,10 @@ namespace NeuralNet
             return layer;
         }
 
-        private void CreateNetwork(int[] hiddenLayerSizes)
+        private void CreateNetwork(int[] hiddenLayerSizes, int inputSize, IEnumerable<string> outputList)
         {
             // intialise input layer
-            InitialiseInputLayer();
+            InitialiseInputLayer(inputSize);
 
             // initialise hidden layers
             _hiddenLayers.Add(CreateLayer(hiddenLayerSizes[0], _inputs.Cast<IInput>().ToList()));
@@ -85,14 +77,15 @@ namespace NeuralNet
                 _hiddenLayers.Add(CreateLayer(hiddenLayerSizes[i], previousLayer.Cast<IInput>().ToList()));
             }
             // initialise output layer
-            List<INeuron> outputNeurons = CreateLayer(_outputList.Count, _hiddenLayers.Last().Cast<IInput>().ToList());
-            _outputLayer = outputNeurons.Zip(_outputList, (n, s) => new {n, s})
+            var outputs = outputList.ToList();
+            List<INeuron> outputNeurons = CreateLayer(outputs.Count, _hiddenLayers.Last().Cast<IInput>().ToList());
+            _outputLayer = outputNeurons.Zip(outputs, (n, s) => new { n, s })
                 .ToDictionary(i => i.n, i => i.s);
         }
 
-        private void InitialiseInputLayer()
+        private void InitialiseInputLayer(int inputSize)
         {
-            for (int i = 0; i < _inputSize; i++)
+            for (int i = 0; i < inputSize; i++)
             {
                 _inputs.Add(new SensoryInput());
             }
@@ -144,9 +137,9 @@ namespace NeuralNet
 
             // backpropagate hidden layers from right to left
             BackPropagate(_hiddenLayers.Last(), _outputLayer.Keys.ToList());
-            for (int i = _hiddenLayers.Count -2; i >= 0; i--)
+            for (int i = _hiddenLayers.Count -1; i > 0; i--)
             {
-                BackPropagate(_hiddenLayers[i], _hiddenLayers[i+1]);
+                BackPropagate(_hiddenLayers[i-1], _hiddenLayers[i]);
             }
         }
 
