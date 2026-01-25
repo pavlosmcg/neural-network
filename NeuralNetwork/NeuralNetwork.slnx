@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DigitRecognition\DigitRecognition.csproj" />
+  <Project Path="NeuralNet\NeuralNet.csproj" />
+</Solution>
