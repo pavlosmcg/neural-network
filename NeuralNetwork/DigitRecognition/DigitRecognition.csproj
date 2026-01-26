@@ -8,16 +8,11 @@
     <ProjectReference Include="..\NeuralNet\NeuralNet.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="testing.csv">
+    <None Update="mnist_test.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="training.csv">
+    <None Update="mnist_train.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="ANSWERS.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 </Project>

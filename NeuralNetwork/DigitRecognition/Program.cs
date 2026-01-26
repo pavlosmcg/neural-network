@@ -10,11 +10,11 @@ namespace DigitRecognition
     {
         public static void Main()
         {
-            IList<Tuple<string, IEnumerable<double>>> trainingInputs = InputFileReader.ReadTrainingInput();
-            IList<Tuple<string, IEnumerable<double>>> validationInputs = InputFileReader.ReadTestingInput();
+            IList<Tuple<string, IEnumerable<double>>> trainingInputs = InputFileReader.ReadMnistCsv("mnist_train.csv");
+            IList<Tuple<string, IEnumerable<double>>> validationInputs = InputFileReader.ReadMnistCsv("mnist_test.csv");
 
             var outputList = Enumerable.Range(0, 10).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToList();
-            var hiddenLayerSizes = new[] { 256, 128 };
+            var hiddenLayerSizes = new[] { 128, 64 };
             var network = new Network(new SigmoidActivation(), 784, outputList, hiddenLayerSizes);
 
             // training:

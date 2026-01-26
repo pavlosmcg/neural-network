@@ -9,10 +9,10 @@ namespace DigitRecognition
     {
         private static readonly Func<double, double> Normalisation = value => (value / 255.0d) - 0.5d;
 
-        public static IList<Tuple<string, IEnumerable<double>>> ReadTrainingInput()
+        public static IList<Tuple<string, IEnumerable<double>>> ReadMnistCsv(string fileName)
         {
             IList<Tuple<string, IEnumerable<double>>> csvInputs = new List<Tuple<string, IEnumerable<double>>>();
-            using (var reader = new StreamReader(File.OpenRead("training.csv")))
+            using (var reader = new StreamReader(File.OpenRead(fileName)))
             {
                 while (!reader.EndOfStream)
                 {
