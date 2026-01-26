@@ -12,9 +12,9 @@ namespace NeuralNet
 
         public double Derivative(double input)
         {
-            var exp = Math.Exp(input);
-            var denomPart = 1.0d + exp;
-            return exp / (denomPart * denomPart);
+            // input is already activated (i.e. sigmoid(input))
+            // so this is the correct formula
+            return input * (1.0d - input);
         }
     }
 }

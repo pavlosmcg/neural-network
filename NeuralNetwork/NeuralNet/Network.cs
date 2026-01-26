@@ -135,10 +135,10 @@ namespace NeuralNet
             foreach (var kvp in _outputLayer)
             {
                 INeuron neuron = kvp.Key;
-                double desired = kvp.Value == correctOutput ? 1.0d : 0.0d;
+                double desired = kvp.Value == correctOutput ? 1.0d : 0.0d; //sigmoid is between 0 and 1
                 double output = neuron.GetValue();
                 double error = desired - output;
-                neuron.Train(error);
+                neuron.TrainOutputLayer(error);
             }
 
             // backpropagate hidden layers from right to left

@@ -44,5 +44,12 @@ namespace NeuralNet
             Inputs.Select(i => i.Value).ToList().ForEach(a => a.UpdateWeight(Error));
             _cachedOutput = null;
         }
+
+        public void TrainOutputLayer(double error)
+        {
+            Error = error;
+            Inputs.Select(i => i.Value).ToList().ForEach(a => a.UpdateWeight(Error));
+            _cachedOutput = null;
+        }
     }
 }
