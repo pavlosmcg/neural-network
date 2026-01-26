@@ -1,0 +1,63 @@
+name: Publish Blazor WASM (AOT) to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      NUGET_XMLDOC_MODE: "skip"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install wasm-tools
+        run: dotnet workload install wasm-tools
+
+      - name: Restore
+        run: dotnet restore ./NeuralNetwork/NeuralNetwork.slnx
+
+      - name: Publish (Release / AOT)
+        run: dotnet publish ./NeuralNetwork/DigitRecognitionDemo/DigitRecognitionDemo.csproj -c Release -o ./published
+
+      # Important for GitHub Pages so it serves _framework correctly
+      - name: Add .nojekyll
+        run: touch ./published/wwwroot/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./published/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
