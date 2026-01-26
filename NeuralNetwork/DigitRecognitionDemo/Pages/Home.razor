@@ -13,9 +13,9 @@
     </div>
     
     <div class="row mt-5">
-        <div class="col-md-6 offset-md-3">
-            <div class="card shadow">
-                <div class="card-body">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
                     <h3 class="card-title text-center mb-4">Draw a Digit</h3>
                     <div class="text-center">
                         <canvas @ref="drawingCanvas" 
@@ -39,19 +39,42 @@
                             </button>
                             <button class="btn btn-secondary" @onclick="ClearCanvas" disabled="@(isProcessing)">Clear</button>
                         </div>
-                        @if (isNetworkLoading)
-                        {
-                            <div class="alert alert-warning mt-3">
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Loading neural network...
-                            </div>
-                        }
-                        else if (!string.IsNullOrEmpty(resultMessage))
-                        {
-                            <div class="alert alert-info mt-3">
-                                @resultMessage
-                            </div>
-                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h3 class="card-title text-center mb-4">28x28 Network Input</h3>
+                    <div class="text-center">
+                        <canvas id="visualizationCanvas" 
+                                width="280" 
+                                height="280" 
+                                class="border rounded bg-dark mx-auto d-block">
+                        </canvas>
+                        <small class="text-muted d-block mt-3">
+                            Updates automatically as you draw<br/>
+                            Red = ink, Blue = background
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h3 class="card-title text-center mb-4">Output Neurons</h3>
+                    <div class="text-center">
+                        <canvas id="outputCanvas" 
+                                width="280" 
+                                height="350" 
+                                class="border rounded bg-dark mx-auto d-block">
+                        </canvas>
+                        <small class="text-muted d-block mt-3">
+                            Neural network output strengths (0-9)<br/>
+                            Brighter = higher confidence
+                        </small>
                     </div>
                 </div>
             </div>
@@ -59,7 +82,31 @@
     </div>
 
     <div class="row mt-4">
-        <div class="col-md-6 offset-md-3 text-center">
+        <div class="col-md-10 offset-md-1 text-center">
+            @if (isNetworkLoading)
+            {
+                <div class="alert alert-warning">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Loading neural network...
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(resultMessage))
+            {
+                <div class="alert alert-info">
+                    @resultMessage
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    Draw a digit and click "Recognize" to see the neural network in action!
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-10 offset-md-1 text-center">
             <h4>About</h4>
             <p>This application uses a neural network to recognize handwritten digits (0-9). The neural network has been trained on the MNIST dataset.</p>
         </div>

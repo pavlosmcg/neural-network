@@ -178,6 +178,11 @@ namespace NeuralNet
             return _outputLayer[winningNeuron];
         }
 
+        public double[] GetOutputValues()
+        {
+            return _outputLayer.Select(kvp => kvp.Key.GetValue()).ToArray();
+        }
+
         public void SerialiseNetworkToDisk(string filename)
         {
             Serialiser.SerialiseWeightsToDisk(

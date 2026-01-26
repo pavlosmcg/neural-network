@@ -30,6 +30,9 @@ public partial class Home : ComponentBase, IAsyncDisposable
                 "import", "./js/canvas.js");
             
             await canvasModule.InvokeVoidAsync("initializeCanvas", "drawingCanvas");
+            
+            // Enable auto-update of visualisation as user draws
+            await canvasModule.InvokeVoidAsync("enableAutoVisualisation", true);
         }
     }
 
@@ -101,7 +104,11 @@ public partial class Home : ComponentBase, IAsyncDisposable
                 // Get the most likely digit
                 string result = network.GetMostLikelyAnswer();
                 
-                resultMessage = $"I think it looks like a {result}";
+                // Get all output values and visualise them
+                var outputValues = network.GetOutputValues();
+                await canvasModule.InvokeVoidAsync("visualiseOutputNeurons", "outputCanvas", outputValues);
+                
+                resultMessage = $"I think it looks like {result}";
             }
         }
         catch (Exception ex)
@@ -120,6 +127,11 @@ public partial class Home : ComponentBase, IAsyncDisposable
         if (canvasModule != null)
         {
             await canvasModule.InvokeVoidAsync("clearCanvas", "drawingCanvas");
+            
+            // Clear output visualisation
+            var emptyOutputs = new double[10];
+            await canvasModule.InvokeVoidAsync("visualiseOutputNeurons", "outputCanvas", emptyOutputs);
+            
             resultMessage = null;
         }
     }
@@ -136,6 +148,18 @@ public partial class Home : ComponentBase, IAsyncDisposable
         }
 
         return Array.Empty<double>();
+    }
+
+    private async Task UpdateVisualisation()
+    {
+        if (canvasModule != null)
+        {
+            // Get the processed 28x28 pixel data
+            var pixelData = await ProcessImageToBitmap();
+            
+            // Visualise it on the visualisation canvas
+            await canvasModule.InvokeVoidAsync("visualiseInputLayer", "visualizationCanvas", pixelData);
+        }
     }
 
     public async ValueTask DisposeAsync()

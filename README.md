@@ -4,6 +4,8 @@ An interactive demo of a neural network built from scratch and trained on the MN
 
 Live demo: https://pavlosmcg.github.io/neural-network/
 
+<img src="recording.gif" />
+
 ## Video
 For an overview of the implementation and underlying concepts, please watch:
 
