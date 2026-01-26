@@ -7,7 +7,7 @@ namespace DigitRecognition
 {
     public class InputFileReader
     {
-        private const double Normalisation = 255.0d;
+        private static readonly Func<double, double> Normalisation = value => (value / 255.0d) - 0.5d;
 
         public static IList<Tuple<string, IEnumerable<double>>> ReadTrainingInput()
         {
@@ -24,7 +24,7 @@ namespace DigitRecognition
 
                     var raw = line.Split(',');
                     var tuple = new Tuple<string, IEnumerable<double>>(raw[0],
-                        raw.Skip(1).Select(s => double.Parse(s)/ Normalisation));
+                        raw.Skip(1).Select(s => Normalisation(double.Parse(s))));
                     csvInputs.Add(tuple);
                 }
             }
@@ -44,7 +44,7 @@ namespace DigitRecognition
                         continue;
                     }
 
-                    var raw = line.Split(',').Select(s => double.Parse(s)/Normalisation);
+                    var raw = line.Split(',').Select(s => Normalisation(double.Parse(s)));
                     csvInputs.Add(raw);
                 }
             }

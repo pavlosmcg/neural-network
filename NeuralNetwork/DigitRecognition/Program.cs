@@ -14,7 +14,7 @@ namespace DigitRecognition
             IList<Tuple<string, IEnumerable<double>>> validationInputs = InputFileReader.ReadTestingInput();
 
             var outputList = Enumerable.Range(0, 10).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToList();
-            var hiddenLayerSizes = new[] { 2500, 2000, 1500, 1000, 500 };
+            var hiddenLayerSizes = new[] { 256, 128 };
             var network = new Network(new SigmoidActivation(), 784, outputList, hiddenLayerSizes);
 
             // training:
