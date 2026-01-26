@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
+using System.Globalization;
+using NeuralNet;
 using NeuralNet.Persistence;
 
 namespace DigitRecognitionDemo.Pages;
@@ -11,6 +13,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
     private IJSObjectReference? canvasModule;
     private string? resultMessage;
     private NetworkModel? networkModel;
+    private Network? network;
 
     protected override async Task OnInitializedAsync()
     {
@@ -37,7 +40,15 @@ public partial class Home : ComponentBase, IAsyncDisposable
             
             if (networkModel != null)
             {
-                resultMessage = "Neural network loaded successfully!";
+                // Create the neural network with the loaded model
+                var activation = new SigmoidActivation();
+                var outputList = Enumerable.Range(0, 10)
+                    .Select(i => i.ToString(CultureInfo.InvariantCulture))
+                    .ToList();
+                
+                network = new Network(activation, 784, outputList, networkModel);
+                
+                resultMessage = "Neural network loaded successfully! Draw a digit and click Recognize.";
             }
             else
             {
@@ -52,7 +63,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
     private async Task RecognizeDigit()
     {
-        if (networkModel == null)
+        if (network == null)
         {
             resultMessage = "Neural network not loaded yet. Please wait...";
             return;
@@ -60,16 +71,23 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
         if (canvasModule != null)
         {
-            // Get the canvas image data as a base64 string
-            var imageData = await canvasModule.InvokeAsync<string>("getCanvasImageData", "drawingCanvas");
-            
-            // Process the image data into a 28x28 bitmap
-            var bitmap = await ProcessImageToBitmap(imageData);
-            
-            // For now, just show a message that processing is complete
-            resultMessage = $"Canvas processed into 28x28 bitmap with {bitmap.Length} pixels. " +
-                          $"Network loaded with {networkModel.HiddenLayers.Length} hidden layer(s). " +
-                          $"Recognition logic will be wired up next!";
+            try
+            {
+                // Process the image data into a 28x28 bitmap
+                var bitmap = await ProcessImageToBitmap();
+                
+                // Update the network with the input pixels
+                network.UpdateNetwork(bitmap.ToList());
+                
+                // Get the most likely digit
+                string result = network.GetMostLikelyAnswer();
+                
+                resultMessage = $"I think it looks like a {result}";
+            }
+            catch (Exception ex)
+            {
+                resultMessage = $"Error recognizing digit: {ex.Message}";
+            }
         }
     }
 
@@ -82,18 +100,8 @@ public partial class Home : ComponentBase, IAsyncDisposable
         }
     }
 
-    private async Task<double[]> ProcessImageToBitmap(string base64ImageData)
+    private async Task<double[]> ProcessImageToBitmap()
     {
-        // Remove the data URL prefix if present
-        var base64Data = base64ImageData;
-        if (base64Data.Contains(','))
-        {
-            base64Data = base64Data.Substring(base64Data.IndexOf(',') + 1);
-        }
-
-        // Convert base64 to byte array
-        var imageBytes = Convert.FromBase64String(base64Data);
-
         // Use JS interop to resize and process the image to 28x28 grayscale
         if (canvasModule != null)
         {

@@ -27,6 +27,12 @@ namespace NeuralNet
             RestoreNetwork(RestoreNetworkFromDisk(filePath), inputSize, outputList);
         }
 
+        public Network(IActivationFunction activation, int inputSize, IEnumerable<string> outputList, NetworkModel networkModel)
+        {
+            _activation = activation;
+            RestoreNetwork(networkModel, inputSize, outputList);
+        }
+
         private void RestoreNetwork(NetworkModel networkModel, int inputSize, IEnumerable<string> outputList)
         {
             // restore input layer
