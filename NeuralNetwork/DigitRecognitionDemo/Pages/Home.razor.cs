@@ -14,6 +14,8 @@ public partial class Home : ComponentBase, IAsyncDisposable
     private string? resultMessage;
     private NetworkModel? networkModel;
     private Network? network;
+    private bool isNetworkLoading = true;
+    private bool isProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,6 +37,9 @@ public partial class Home : ComponentBase, IAsyncDisposable
     {
         try
         {
+            isNetworkLoading = true;
+            StateHasChanged();
+            
             // Fetch the network.json file from wwwroot/data/
             networkModel = await HttpClient.GetFromJsonAsync<NetworkModel>("data/network.json");
             
@@ -59,19 +64,33 @@ public partial class Home : ComponentBase, IAsyncDisposable
         {
             resultMessage = $"Error loading network: {ex.Message}";
         }
+        finally
+        {
+            isNetworkLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task RecognizeDigit()
     {
-        if (network == null)
+        try
         {
-            resultMessage = "Neural network not loaded yet. Please wait...";
-            return;
-        }
+            isProcessing = true;
+            StateHasChanged();
+            
+            // Wait for network to load if it's still loading
+            while (isNetworkLoading)
+            {
+                await Task.Delay(100);
+            }
+            
+            if (network == null)
+            {
+                resultMessage = "Failed to load neural network. Please refresh the page.";
+                return;
+            }
 
-        if (canvasModule != null)
-        {
-            try
+            if (canvasModule != null)
             {
                 // Process the image data into a 28x28 bitmap
                 var bitmap = await ProcessImageToBitmap();
@@ -84,10 +103,15 @@ public partial class Home : ComponentBase, IAsyncDisposable
                 
                 resultMessage = $"I think it looks like a {result}";
             }
-            catch (Exception ex)
-            {
-                resultMessage = $"Error recognizing digit: {ex.Message}";
-            }
+        }
+        catch (Exception ex)
+        {
+            resultMessage = $"Error recognizing digit: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
         }
     }
 
