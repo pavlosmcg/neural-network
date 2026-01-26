@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Net.Http.Json;
+using NeuralNet.Persistence;
 
 namespace DigitRecognitionDemo.Pages;
 
@@ -8,6 +10,12 @@ public partial class Home : ComponentBase, IAsyncDisposable
     private ElementReference drawingCanvas;
     private IJSObjectReference? canvasModule;
     private string? resultMessage;
+    private NetworkModel? networkModel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNetwork();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -20,8 +28,36 @@ public partial class Home : ComponentBase, IAsyncDisposable
         }
     }
 
+    private async Task LoadNetwork()
+    {
+        try
+        {
+            // Fetch the network.json file from wwwroot/data/
+            networkModel = await HttpClient.GetFromJsonAsync<NetworkModel>("data/network.json");
+            
+            if (networkModel != null)
+            {
+                resultMessage = "Neural network loaded successfully!";
+            }
+            else
+            {
+                resultMessage = "Failed to load neural network.";
+            }
+        }
+        catch (Exception ex)
+        {
+            resultMessage = $"Error loading network: {ex.Message}";
+        }
+    }
+
     private async Task RecognizeDigit()
     {
+        if (networkModel == null)
+        {
+            resultMessage = "Neural network not loaded yet. Please wait...";
+            return;
+        }
+
         if (canvasModule != null)
         {
             // Get the canvas image data as a base64 string
@@ -31,7 +67,9 @@ public partial class Home : ComponentBase, IAsyncDisposable
             var bitmap = await ProcessImageToBitmap(imageData);
             
             // For now, just show a message that processing is complete
-            resultMessage = $"Canvas processed into 28x28 bitmap with {bitmap.Length} pixels. Recognition will be wired up next!";
+            resultMessage = $"Canvas processed into 28x28 bitmap with {bitmap.Length} pixels. " +
+                          $"Network loaded with {networkModel.HiddenLayers.Length} hidden layer(s). " +
+                          $"Recognition logic will be wired up next!";
         }
     }
 
