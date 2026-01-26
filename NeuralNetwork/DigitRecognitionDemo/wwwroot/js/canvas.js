@@ -117,8 +117,8 @@ export function processImageTo28x28(canvasId) {
         // Average RGB to get grayscale
         const gray = (r + g + b) / 3.0;
         
-        // Invert (white background -> 0, black drawing -> 1) and normalize
-        const normalized = 1.0 - (gray / 255.0);
+        // Invert (white background -> 0, black drawing -> 1) and normalize to -0.5 to 0.5
+        const normalized = 0.5 - (gray / 255.0);
         
         grayscalePixels.push(normalized);
     }

@@ -10,11 +10,19 @@ namespace DigitRecognition
     {
         public static void Main()
         {
-            IList<Tuple<string, IEnumerable<double>>> trainingInputs = InputFileReader.ReadMnistCsv("mnist_train.csv");
-            IList<Tuple<string, IEnumerable<double>>> validationInputs = InputFileReader.ReadMnistCsv("mnist_test.csv");
+            // shuffle the 60k mnist training inputs
+            var numberGenerator = new Random(123456); // fixed so that I get the same split every time I try to train this thing.
+            IList<Tuple<string, IEnumerable<double>>> allInputs = InputFileReader
+                .ReadMnistCsv("mnist_train.csv")
+                .OrderBy(_ => numberGenerator.Next())
+                .ToList();
+
+            // keep some back for validation
+            var trainingInputs = allInputs.Take(50000).ToList();
+            var validationInputs = allInputs.Skip(50000).Take(10000).ToList();
 
             var outputList = Enumerable.Range(0, 10).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToList();
-            var hiddenLayerSizes = new[] { 128, 64 };
+            var hiddenLayerSizes = new[] { 512 };
             var network = new Network(new SigmoidActivation(), 784, outputList, hiddenLayerSizes);
 
             // training:
